@@ -12,8 +12,32 @@ app.set('view engine', 'handlebars')
 app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 
+// index
 app.get('/', (req, res) => {
   res.send('Hello World')
+})
+
+// login
+app.get('/users/login', (req, res) => {
+  res.render('login')
+})
+
+app.post('/users/login', (req, res) => {
+  res.send('login')
+})
+
+// register
+app.get('/users/register', (req, res) => {
+  res.render('register')
+})
+
+app.post('/users/register', (req, res) => {
+  res.redirect('/users/login')
+})
+
+// logout
+app.get('users/logout', (req, res) => {
+  res.send('logout')
 })
 
 app.listen(PORT, () => {
