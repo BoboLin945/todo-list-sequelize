@@ -2,7 +2,9 @@ const express = require('express')
 const exphbs = require('express-handlebars')
 const methodOverride = require('method-override')
 const bcrypt = require('bcryptjs')
-const { urlencoded } = require('body-parser')
+const session = require('express-session')
+const usePassport = require('./config/passport')
+const passport = require('passport')
 
 const app = express()
 const PORT = 3000
@@ -11,6 +13,14 @@ app.engine('handlebars', exphbs({ defaultLayout: 'main' }))
 app.set('view engine', 'handlebars')
 app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
+
+app.use(session({
+  secret: 'ThisIsMyTodoSecret',
+  resave: false,
+  saveUninitialized: true
+}))
+
+usePassport(app)
 
 // 先載入資料夾
 const db = require('./models')
@@ -41,9 +51,10 @@ app.get('/users/login', (req, res) => {
   res.render('login')
 })
 
-app.post('/users/login', (req, res) => {
-  res.send('login')
-})
+app.post('/users/login', passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/users/login'
+}))
 
 // register
 app.get('/users/register', (req, res) => {
