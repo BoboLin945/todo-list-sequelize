@@ -12,6 +12,11 @@ app.set('view engine', 'handlebars')
 app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 
+// 先載入資料夾
+const db = require('./models')
+const Todo = db.Todo
+const User = db.User
+
 // index
 app.get('/', (req, res) => {
   res.send('Hello World')
@@ -32,7 +37,13 @@ app.get('/users/register', (req, res) => {
 })
 
 app.post('/users/register', (req, res) => {
-  res.redirect('/users/login')
+  const { name, email, password, confirmPassword } = req.body
+  User.create({
+    name,
+    email,
+    password
+  })
+  .then(user => res.redirect('/'))
 })
 
 // logout
