@@ -53,7 +53,14 @@ app.get('/todos/new', authenticator, (req, res) => {
 })
 
 app.post('/todos', authenticator, (req, res) => {
-  res.send('add new todos')
+  const { name } = req.body
+  const userId = req.user.id
+  return Todo.create({
+    name,
+    UserId: userId
+  })
+  .then(() => res.redirect('/'))
+  .catch((error) => console.log(error))
 })
 
 // READ : detail view
