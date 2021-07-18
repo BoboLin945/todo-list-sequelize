@@ -25,6 +25,7 @@ usePassport(app)
 
 // 先載入資料夾
 const db = require('./models')
+const auth = require('./middleware/auth')
 const Todo = db.Todo
 const User = db.User
 
@@ -94,6 +95,16 @@ app.put('/todos/:id', authenticator, (req, res) => {
       todo.isDone = isDone === 'on'
       return todo.save()
     })
+    .then(() => res.redirect('/'))
+    .catch(error => console.log(error))
+})
+
+//　Delete
+app.delete('/todos/:id', authenticator, (req, res) => {
+  const UserId = req.user.id
+  const id = req.params.id
+  return Todo.findOne({ where: { id, UserId } })
+    .then(todo => todo.destroy())
     .then(() => res.redirect('/'))
     .catch(error => console.log(error))
 })
