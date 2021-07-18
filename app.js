@@ -37,7 +37,9 @@ app.use((req, res, next) => {
 
 // index
 app.get('/', authenticator, (req, res) => {
+  const userId = req.user.id
   return Todo.findAll({
+    where: { UserId: userId },
     raw: true,
     nest: true
   })
@@ -80,11 +82,11 @@ app.get('/users/register', (req, res) => {
 
 app.post('/users/register', (req, res) => {
   const { name, email, password, confirmPassword } = req.body
-  User.findOne({ where: { email }})
+  User.findOne({ where: { email } })
     .then(user => {
       if (user) {
         console.log('User already exists.')
-        return res.render('register', { name, email, password, confirmPassword})
+        return res.render('register', { name, email, password, confirmPassword })
       }
       return bcrypt
         .genSalt(10)
