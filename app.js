@@ -6,6 +6,7 @@ const session = require('express-session')
 const usePassport = require('./config/passport')
 const passport = require('passport')
 const { authenticator } = require('./middleware/auth')
+const flash = require('connect-flash')
 
 const app = express()
 const PORT = 3000
@@ -22,6 +23,7 @@ app.use(session({
 }))
 
 usePassport(app)
+app.use(flash())
 
 // 先載入資料夾
 const db = require('./models')
@@ -33,6 +35,8 @@ const User = db.User
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.isAuthenticated()
   res.locals.user = req.user
+  res.locals.success_msg = req.flash('success_msg')
+  res.locals.warning_msg = req.flash('warning_msg')
   next()
 })
 
@@ -109,7 +113,6 @@ app.delete('/todos/:id', authenticator, (req, res) => {
     .catch(error => console.log(error))
 })
 
-
 // login
 app.get('/users/login', (req, res) => {
   res.render('login')
@@ -127,11 +130,21 @@ app.get('/users/register', (req, res) => {
 
 app.post('/users/register', (req, res) => {
   const { name, email, password, confirmPassword } = req.body
+  const errorMessages = []
+  if (!name || !email || !password || !confirmPassword) {
+    errorMessages.push({ message: 'All fields are required!'})
+  }
+  if (password !== confirmPassword) {
+    errorMessages.push({ message: 'Password and Confirm Password do not match!'})
+  }
+  if (errorMessages.length) {
+    return res.render('register', { name, email, password, confirmPassword, errorMessages })
+  }
   User.findOne({ where: { email } })
     .then(user => {
       if (user) {
-        console.log('User already exists.')
-        return res.render('register', { name, email, password, confirmPassword })
+        errorMessages.push({ message: 'User already exists.'})
+        return res.render('register', { name, email, password, confirmPassword, errorMessages })
       }
       return bcrypt
         .genSalt(10)
@@ -149,6 +162,7 @@ app.post('/users/register', (req, res) => {
 // logout
 app.get('/users/logout', (req, res) => {
   req.logOut()
+  req.flash('success_msg', 'Logout successful!')
   res.redirect('/users/login')
 })
 
