@@ -59,8 +59,8 @@ app.post('/todos', authenticator, (req, res) => {
     name,
     UserId: userId
   })
-  .then(() => res.redirect('/'))
-  .catch((error) => console.log(error))
+    .then(() => res.redirect('/'))
+    .catch((error) => console.log(error))
 })
 
 // READ : detail view
@@ -71,6 +71,33 @@ app.get('/todos/:id', authenticator, (req, res) => {
     .then(todo => res.render('detail', { todo: todo.toJSON() }))
     .catch(error => console.log(error))
 })
+
+// Update : edit view
+app.get('/todos/:id/edit', authenticator, (req, res) => {
+  const id = req.params.id
+  const UserId = req.user.id
+  // find id from todo and belong to this user
+  return Todo.findOne({ where: { id, UserId } })
+    .then(todo => res.render('edit', { todo: todo.toJSON() }))
+    .catch(error => console.log(error))
+})
+
+app.put('/todos/:id', authenticator, (req, res) => {
+  const { name, isDone } = req.body
+  const UserId = req.user.id
+  const id = req.params.id
+  return Todo.findOne({ where: { id, UserId } })
+    .then(todo => {
+      todo.name = name
+      // if (isDone === 'on') { todo.isDone = true } 
+      // else { todo.isDone = false }
+      todo.isDone = isDone === 'on'
+      return todo.save()
+    })
+    .then(() => res.redirect('/'))
+    .catch(error => console.log(error))
+})
+
 
 // login
 app.get('/users/login', (req, res) => {
