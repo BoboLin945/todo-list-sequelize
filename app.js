@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs')
 const session = require('express-session')
 const usePassport = require('./config/passport')
 const passport = require('passport')
+const { authenticator } = require('./middleware/auth')
 
 const app = express()
 const PORT = 3000
@@ -27,8 +28,15 @@ const db = require('./models')
 const Todo = db.Todo
 const User = db.User
 
+// 給 handlebars 使用
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.isAuthenticated()
+  res.locals.user = req.user
+  next()
+})
+
 // index
-app.get('/', (req, res) => {
+app.get('/', authenticator, (req, res) => {
   return Todo.findAll({
     raw: true,
     nest: true
@@ -37,8 +45,17 @@ app.get('/', (req, res) => {
     .catch(error => { return res.status(422).json(error) })
 })
 
-// detail view
-app.get('/todos/:id', (req, res) => {
+// CREATE
+app.get('/todos/new', authenticator, (req, res) => {
+  res.render('new')
+})
+
+app.post('/todos', authenticator, (req, res) => {
+  res.send('add new todos')
+})
+
+// READ : detail view
+app.get('/todos/:id', authenticator, (req, res) => {
   const id = req.params.id
   return Todo.findByPk(id)
     // 轉換成 plain object  => toJSON()
@@ -83,8 +100,9 @@ app.post('/users/register', (req, res) => {
 })
 
 // logout
-app.get('users/logout', (req, res) => {
-  res.send('logout')
+app.get('/users/logout', (req, res) => {
+  req.logOut()
+  res.redirect('/users/login')
 })
 
 app.listen(PORT, () => {
