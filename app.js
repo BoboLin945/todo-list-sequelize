@@ -37,6 +37,7 @@ app.use((req, res, next) => {
   res.locals.user = req.user
   res.locals.success_msg = req.flash('success_msg')
   res.locals.warning_msg = req.flash('warning_msg')
+  res.locals.login_msg = req.flash('login_msg')
   next()
 })
 
@@ -120,7 +121,8 @@ app.get('/users/login', (req, res) => {
 
 app.post('/users/login', passport.authenticate('local', {
   successRedirect: '/',
-  failureRedirect: '/users/login'
+  failureRedirect: '/users/login',
+  failureFlash: true
 }))
 
 // register
