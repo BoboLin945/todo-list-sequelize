@@ -8,6 +8,10 @@ const passport = require('passport')
 const { authenticator } = require('./middleware/auth')
 const flash = require('connect-flash')
 
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
+
 const app = express()
 const PORT = 3000
 
@@ -17,7 +21,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 
 app.use(session({
-  secret: 'ThisIsMyTodoSecret',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true
 }))
@@ -114,7 +118,7 @@ app.delete('/todos/:id', authenticator, (req, res) => {
     .catch(error => console.log(error))
 })
 
-// login
+// local login
 app.get('/users/login', (req, res) => {
   res.render('login')
 })
@@ -123,6 +127,16 @@ app.post('/users/login', passport.authenticate('local', {
   successRedirect: '/',
   failureRedirect: '/users/login',
   failureFlash: true
+}))
+
+// facebook login
+app.get('/auth/facebook', passport.authenticate('facebook', {
+  scope: ['email', 'public_profile']
+}))
+
+app.get('/auth/facebook/callback', passport.authenticate('facebook', {
+  successRedirect: '/',
+  failureRedirect: '/users/login'
 }))
 
 // register
@@ -134,10 +148,10 @@ app.post('/users/register', (req, res) => {
   const { name, email, password, confirmPassword } = req.body
   const errorMessages = []
   if (!name || !email || !password || !confirmPassword) {
-    errorMessages.push({ message: 'All fields are required!'})
+    errorMessages.push({ message: 'All fields are required!' })
   }
   if (password !== confirmPassword) {
-    errorMessages.push({ message: 'Password and Confirm Password do not match!'})
+    errorMessages.push({ message: 'Password and Confirm Password do not match!' })
   }
   if (errorMessages.length) {
     return res.render('register', { name, email, password, confirmPassword, errorMessages })
@@ -145,7 +159,7 @@ app.post('/users/register', (req, res) => {
   User.findOne({ where: { email } })
     .then(user => {
       if (user) {
-        errorMessages.push({ message: 'User already exists.'})
+        errorMessages.push({ message: 'User already exists.' })
         return res.render('register', { name, email, password, confirmPassword, errorMessages })
       }
       return bcrypt
